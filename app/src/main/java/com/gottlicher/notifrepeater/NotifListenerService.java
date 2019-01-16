@@ -3,8 +3,11 @@ package com.gottlicher.notifrepeater;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ComponentName;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.os.IBinder;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationCompat;
@@ -20,10 +23,23 @@ public class NotifListenerService extends NotificationListenerService {
     final String CHANNEL_ID = "Forwaded";
     final String TAG = "NOTIF";
 
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        Log.d (TAG, "Service bound");
+        return super.onBind(intent);
+    }
+
     @Override
     public void onListenerConnected() {
 
         Log.d (TAG, "Connected");
+    }
+
+    @Override
+    public void onListenerDisconnected() {
+        Log.d(TAG, "Disconnected");
+        requestRebind(ComponentName.createRelative(this.getApplicationContext().getPackageName(), "NotifListenerService"));
     }
 
     @Override
