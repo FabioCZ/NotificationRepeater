@@ -45,12 +45,18 @@ public class NotifListenerService extends NotificationListenerService {
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn, RankingMap rankingMap) {
         Log.d (TAG, "Removed" + sbn.getPackageName());
-
     }
 
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn, RankingMap rankingMap, int reason) {
-        Log.d (TAG, "Removed" + sbn.getPackageName() + "reason" + reason);
+        if (reason != REASON_ERROR) {
+            Log.d (TAG, "Removed " + sbn.getPackageName() + " due to reason" + reason);
+            return;
+        }
+        Log.d (TAG, "Removed " + sbn.getPackageName() + " due to REASON_ERROR");
+
+        AppHistoryHelper.addNotificationOccurence(getApplicationContext(), sbn.getPackageName());
+        postRepeatNotif(sbn);
     }
 
     @Override
@@ -61,43 +67,25 @@ public class NotifListenerService extends NotificationListenerService {
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
         Log.d (TAG, "New notif from " + sbn.getPackageName());
-
-        postRepeatNotif(sbn);
     }
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap) {
         Log.d (TAG, "New notif from " + sbn.getPackageName());
-        postRepeatNotif(sbn);
     }
-
 
     void postRepeatNotif (StatusBarNotification sbn) {
 
-        int iconRes = 0;
-        if (sbn.getPackageName().equals(GOOGLE_VOICE_PACKAGE) ) {
-            iconRes = R.drawable.ic_perm_phone_msg_black_24dp;
-        } else if (sbn.getPackageName().equals(DISCORD_PACKAGE)) {
-            iconRes = R.drawable.ic_textsms_black_24dp;
-        } else {
-            return;
-        }
-
-        final PackageManager pm = getApplicationContext().getPackageManager();
-        ApplicationInfo ai;
-        try {
-            ai = pm.getApplicationInfo(sbn.getPackageName(), 0);
-        } catch (final PackageManager.NameNotFoundException e) {
-            ai = null;
-        }
-        final String applicationName = (String) (ai != null ? pm.getApplicationLabel(ai) : "(unknown)");
-
+        int iconRes = AppHistoryHelper.getIconFor(getApplicationContext(), sbn.getPackageName());
+        String appLauncherName = AppHistoryHelper.getAppNameFromPackage(getApplicationContext(), sbn.getPackageName());
         createNotificationChannel();
 
+        CharSequence title = sbn.getNotification().extras.getCharSequence("android.title", "Failed to parse");
         CharSequence text = sbn.getNotification().extras.getCharSequence("android.text", "Failed to parse");
+
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(iconRes)
-                .setContentTitle(applicationName + " " + sbn.getNotification().extras.getString("android.title"))
+                .setContentTitle(appLauncherName + ": " + title.toString())
                 .setContentText(text.toString())
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setContentIntent(sbn.getNotification().contentIntent)
