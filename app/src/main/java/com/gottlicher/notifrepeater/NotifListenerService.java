@@ -1,28 +1,26 @@
 package com.gottlicher.notifrepeater;
 
 import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.IBinder;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.text.SpannableString;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 public class NotifListenerService extends NotificationListenerService {
 
-    final String GOOGLE_VOICE_PACKAGE = "com.google.android.apps.googlevoice";
-    final String DISCORD_PACKAGE = "com.discord";
-
-    final String CHANNEL_ID = "Forwaded";
+    final static String RELOAD_MESSAGE = "com.gottlicher.notifrepeater.reloadData";
+    final static String CHANNEL_ID = "Forwaded";
     final String TAG = "NOTIF";
 
+    private LocalBroadcastManager localBroadcastManager;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -32,14 +30,15 @@ public class NotifListenerService extends NotificationListenerService {
 
     @Override
     public void onListenerConnected() {
-
         Log.d (TAG, "Connected");
+        localBroadcastManager = LocalBroadcastManager.getInstance(this);
     }
 
     @Override
     public void onListenerDisconnected() {
         Log.d(TAG, "Disconnected");
         requestRebind(ComponentName.createRelative(this.getApplicationContext().getPackageName(), "NotifListenerService"));
+        localBroadcastManager = null;
     }
 
     @Override
@@ -56,7 +55,7 @@ public class NotifListenerService extends NotificationListenerService {
         Log.d (TAG, "Removed " + sbn.getPackageName() + " due to REASON_ERROR");
 
         AppHistoryHelper.addNotificationOccurence(getApplicationContext(), sbn.getPackageName());
-        postRepeatNotif(sbn);
+        postRepeatNotification(sbn);
     }
 
     @Override
@@ -74,39 +73,33 @@ public class NotifListenerService extends NotificationListenerService {
         Log.d (TAG, "New notif from " + sbn.getPackageName());
     }
 
-    void postRepeatNotif (StatusBarNotification sbn) {
+    void postRepeatNotification(StatusBarNotification sbn) {
 
         int iconRes = AppHistoryHelper.getIconFor(getApplicationContext(), sbn.getPackageName());
         String appLauncherName = AppHistoryHelper.getAppNameFromPackage(getApplicationContext(), sbn.getPackageName());
-        createNotificationChannel();
 
         CharSequence title = sbn.getNotification().extras.getCharSequence("android.title", "Failed to parse");
         CharSequence text = sbn.getNotification().extras.getCharSequence("android.text", "Failed to parse");
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(iconRes)
-                .setContentTitle(appLauncherName + ": " + title.toString())
-                .setContentText(text.toString())
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setContentIntent(sbn.getNotification().contentIntent)
-                .setAutoCancel(true);
-
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-
-        // notificationId is a unique int for each notification that you must define
-        notificationManager.notify(sbn.getId(), mBuilder.build());
+        postNotification(this, appLauncherName + ": " + title, text.toString(), iconRes, sbn.getNotification().contentIntent, sbn.getId());
+        localBroadcastManager.sendBroadcast(new Intent(RELOAD_MESSAGE));
     }
 
-    private void createNotificationChannel() {
-        CharSequence name = getString(R.string.notif_channel_name);
-        String description = getString(R.string.notif_channel_name);
-        int importance = NotificationManager.IMPORTANCE_DEFAULT;
-        NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
-        channel.setDescription(description);
-        // Register the channel with the system; you can't change the importance
-        // or other notification behaviors after this
-        NotificationManager notificationManager = getSystemService(NotificationManager.class);
-        notificationManager.createNotificationChannel(channel);
+    public static void postNotification(Context context, String title, String text, int icon, PendingIntent clickIntent, int id)
+    {
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(icon)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(clickIntent)
+                .setAutoCancel(true)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+
+        // notificationId is a unique int for each notification that you must define
+        notificationManager.notify(id, mBuilder.build());
 
     }
 }

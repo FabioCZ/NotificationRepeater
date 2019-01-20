@@ -5,10 +5,15 @@
 
     <!-- from: https://github.com/Chagall/notification-listener-service-example -->
     <string name="notification_listener_service">"Notification Listener Service"</string>
-    <string name="notification_listener_service_explanation">"For the the app. to work you need to enable the Notification Listener Service. Enable it now?"</string>
+    <string name="notification_listener_service_explanation">"For the app. to work you need to enable the Notification Listener Service. Enable it now?"</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
 
+    <string name="app_settings_instr">Make sure you go to this app\'s settings, enable notifications, and customize to your liking (e.g. lock screen/floating etc.)</string>
     <string name="home_about">MIUI 10 has issues showing notifications from some apps. The notifications from those troubled apps are recognized by the system, but they are immediately dismissed because there is an error showing the notification UI. This app will intercept those notifications, and re-show using a generic UI. Please post issues to <a href="https://github.com/FabioCZ/NotificationRepeater">github.com/FabioCZ/NotificationRepeater</a> or PM me at /u/FabioCZ</string>
     <string name="past_app">Past apps that had errored notifications are below. Tap on each item to cycle through available notification icons.</string>
+    <string name="test_notif">Send test Notification</string>
+    <string name="app_settings">App Settings</string>
+    <string name="the_app_will_not_work">Warning! the app will not work at all without notification access!</string>
+    <string name="test_notif_received">Test notification clicked!</string>
 </resources>
