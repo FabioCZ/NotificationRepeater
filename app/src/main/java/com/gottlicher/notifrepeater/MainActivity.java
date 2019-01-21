@@ -125,7 +125,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void createNotificationChannel() {
-        CharSequence name = getString(R.string.notif_channel_name);
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.O) {
+            return;
+        }
+            CharSequence name = getString(R.string.notif_channel_name);
         String description = getString(R.string.notif_channel_name);
         int importance = NotificationManager.IMPORTANCE_HIGH;
         NotificationChannel channel = new NotificationChannel(NotifListenerService.CHANNEL_ID, name, importance);

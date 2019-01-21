@@ -85,8 +85,15 @@ public class NotifListenerService extends NotificationListenerService {
 
     public static void postNotification(Context context, String title, String text, int icon, PendingIntent clickIntent, int id)
     {
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(icon)
+        NotificationCompat.Builder mBuilder;
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            mBuilder = new NotificationCompat.Builder(context, CHANNEL_ID);
+        } else {
+            mBuilder = new NotificationCompat.Builder(context);
+        }
+
+        mBuilder.setSmallIcon(icon)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setContentIntent(clickIntent)
