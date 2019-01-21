@@ -9,14 +9,8 @@ import android.preference.PreferenceManager;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.lang.reflect.Type;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class AppHistoryHelper {
     private final static String APPS_PREF_NAME = "APPS_PREF_NAME";
@@ -68,7 +62,7 @@ public class AppHistoryHelper {
         editor.apply();
     }
 
-    public static ArrayList<AppInfo> getOccurences (Context context)
+    public static ArrayList<AppInfo> getOccurrences(Context context)
     {
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
         String appsJson = sharedPrefs.getString(APPS_PREF_NAME, "");

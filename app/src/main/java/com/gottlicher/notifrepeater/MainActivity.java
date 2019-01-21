@@ -6,13 +6,11 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -28,12 +26,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 
 // Dialog code from: https://github.com/Chagall/notification-listener-service-example
 public class MainActivity extends AppCompatActivity {
@@ -100,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         list.setHasFixedSize(true);
         RecyclerView.LayoutManager lm = new LinearLayoutManager(this);
         list.setLayoutManager(lm);
-        RecyclerView.Adapter ad = new PastAppsAdapter(AppHistoryHelper.getOccurences (this));
+        RecyclerView.Adapter ad = new PastAppsAdapter(AppHistoryHelper.getOccurrences(this));
         list.setAdapter(ad);
     }
 
