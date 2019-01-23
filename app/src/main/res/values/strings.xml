@@ -15,5 +15,8 @@
     <string name="test_notif">Send test Notification</string>
     <string name="app_settings">App Settings</string>
     <string name="the_app_will_not_work">Warning! the app will not work at all without notification access!</string>
-    <string name="test_notif_received">Test notification clicked!</string>
+    <string name="test_notif_content_click">Test notification content clicked!</string>
+    <string name="test_notif_action_click">Test notification action clicked!</string>
+    <string name="senate">I am the senate</string>
+    <string name="enable_notif_actions">Enable notification actions (Expirimental - turn this off if you\'re having issues</string>
 </resources>

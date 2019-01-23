@@ -8,9 +8,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -21,23 +24,31 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.List;
 
 // Dialog code from: https://github.com/Chagall/notification-listener-service-example
 public class MainActivity extends AppCompatActivity {
 
+    public static final String ACTIONS_ENABLED_PREF = "ACTIONS_ENABLED_PREF";
+
     private static final String ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners";
     private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
     private static final int TEST_NOTIF_CODE = 1;
-    private static final String TEST_NOTIF_EXTRA = "TEST_NOTIF";
+    private static final String TEST_NOTIF_CONTENT_EXTRA = "TEST_NOTIF_CONTENT_EXTRA";
+    private static final String TEST_NOTIF_ACTION_EXTRA = "TEST_NOTIF_ACTION_EXTRA";
+
+    private final int TEST_NOTIF_ID = 123;
 
     BroadcastReceiver reloadBroadcastReceiver;
-
+    CheckBox actionsEnabledCheckbox;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,6 +75,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         populatePastAppsList();
+        actionsEnabledCheckbox = findViewById(R.id.notif_actions_checkbox);
+        actionsEnabledCheckbox.setChecked(isNotificationsActionsEnabled(this));
+        actionsEnabledCheckbox.setOnCheckedChangeListener((compoundButton, b) -> {
+            setNotificationsActionsEnabled(b);
+        });
     }
 
     @Override
@@ -76,8 +92,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        if (intent.hasExtra(TEST_NOTIF_EXTRA)){
-            Toast.makeText(this, R.string.test_notif_received,Toast.LENGTH_LONG).show();
+        if (intent.hasExtra(TEST_NOTIF_CONTENT_EXTRA)){
+            Toast.makeText(this, R.string.test_notif_content_click,Toast.LENGTH_LONG).show();
+        } else if (intent.hasExtra(TEST_NOTIF_ACTION_EXTRA)){
+            Toast.makeText(this, R.string.test_notif_action_click,Toast.LENGTH_LONG).show();
         }
     }
 
@@ -103,8 +121,8 @@ public class MainActivity extends AppCompatActivity {
                 ENABLED_NOTIFICATION_LISTENERS);
         if (!TextUtils.isEmpty(flat)) {
             final String[] names = flat.split(":");
-            for (int i = 0; i < names.length; i++) {
-                final ComponentName cn = ComponentName.unflattenFromString(names[i]);
+            for (String name : names) {
+                final ComponentName cn = ComponentName.unflattenFromString(name);
                 if (cn != null) {
                     if (TextUtils.equals(pkgName, cn.getPackageName())) {
                         return true;
@@ -154,18 +172,49 @@ public class MainActivity extends AppCompatActivity {
     private void showTestNotification ()
     {
         Intent intent = new Intent(this,MainActivity.class);
-        intent.putExtra(TEST_NOTIF_EXTRA, TEST_NOTIF_EXTRA);
-        PendingIntent pi =  PendingIntent.getActivity(this, TEST_NOTIF_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        NotifListenerService.postNotification(this, "Repeated test notification", "Did you ever hear the tragedy of Darth Plagueis The Wise?", R.drawable.ic_notifications_black_24dp, pi, 123);
+        intent.putExtra(TEST_NOTIF_CONTENT_EXTRA, TEST_NOTIF_CONTENT_EXTRA);
+        PendingIntent pi = PendingIntent.getActivity(this, TEST_NOTIF_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent actionIntent = new Intent(this,MainActivity.class);
+        actionIntent.putExtra(NotifHandlerBroadcastReceiver.EXTRA_NOTIF_TO_DISMISS, TEST_NOTIF_ID);
+
+        actionIntent.putExtra(TEST_NOTIF_ACTION_EXTRA, TEST_NOTIF_ACTION_EXTRA);
+        PendingIntent actionPI  = PendingIntent.getActivity(this, TEST_NOTIF_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        NotificationCompat.Action action = new NotificationCompat.Action.Builder (0, getResources().getString(R.string.senate), actionPI).build();
+        List<NotificationCompat.Action> actions = new ArrayList<>();
+        if (actionsEnabledCheckbox.isChecked()) {
+            actions.add(action);
+        }
+        NotifListenerService.postNotification(this,
+                "Repeated test notification",
+                "Did you ever hear the tragedy of Darth Plagueis The Wise?",
+                R.drawable.ic_notifications_black_24dp,
+                pi,
+                TEST_NOTIF_ID,
+                NotificationCompat.VISIBILITY_PUBLIC,
+                actions);
     }
 
-    public static class PastAppsHolder extends RecyclerView.ViewHolder {
-        // each data item is just a string in this case
-        public TextView nameTxt;
-        public TextView ctTxt;
-        public ImageView icon;
+    public static boolean isNotificationsActionsEnabled (Context context)
+    {
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return sharedPrefs.getBoolean(ACTIONS_ENABLED_PREF, true);
+    }
 
-        public PastAppsHolder(LinearLayout v) {
+    void setNotificationsActionsEnabled (boolean enabled)
+    {
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPrefs.edit();
+        editor.putBoolean(ACTIONS_ENABLED_PREF, enabled);
+        editor.apply();
+    }
+
+    static class PastAppsHolder extends RecyclerView.ViewHolder {
+        // each data item is just a string in this case
+        TextView nameTxt;
+        TextView ctTxt;
+        ImageView icon;
+
+        PastAppsHolder(LinearLayout v) {
             super(v);
             nameTxt = v.findViewById(R.id.app_name);
             ctTxt = v.findViewById(R.id.app_count);
@@ -188,21 +237,19 @@ public class MainActivity extends AppCompatActivity {
                 R.drawable.ic_email_black_24dp
         };
 
-        // Provide a suitable constructor (depends on the kind of dataset)
-        public PastAppsAdapter(ArrayList<AppHistoryHelper.AppInfo> dataSet) {
+        PastAppsAdapter(ArrayList<AppHistoryHelper.AppInfo> dataSet) {
             mDataset = dataSet;
         }
 
         // Create new views (invoked by the layout manager)
+        @NonNull
         @Override
-        public PastAppsHolder onCreateViewHolder(ViewGroup parent,
-                                                         int viewType) {
+        public PastAppsHolder onCreateViewHolder(@NonNull ViewGroup parent,
+                                                 int viewType) {
             // create a new view
             LinearLayout v = (LinearLayout) LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.past_apps_view_holder, parent, false);
-            PastAppsHolder vh = new PastAppsHolder(v);
-
-            return vh;
+            return new PastAppsHolder(v);
         }
 
         @Override
