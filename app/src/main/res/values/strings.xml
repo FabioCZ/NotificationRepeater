@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Notification Repeater</string>
     <string name="notif_service_name">Xiaomi notification repeater</string>
-    <string name="notif_channel_name">Repated Notifications</string>
+    <string name="notif_channel_name">Repeated Notifications</string>
 
     <!-- from: https://github.com/Chagall/notification-listener-service-example -->
     <string name="notification_listener_service">"Notification Listener Service"</string>
