@@ -14,6 +14,7 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -33,6 +34,8 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.gottlicher.notifrepeater.NotifHandlerBroadcastReceiver.EXTRA_NOTIF_TO_DISMISS;
 
 // Dialog code from: https://github.com/Chagall/notification-listener-service-example
 public class MainActivity extends AppCompatActivity {
@@ -96,6 +99,9 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.test_notif_content_click,Toast.LENGTH_LONG).show();
         } else if (intent.hasExtra(TEST_NOTIF_ACTION_EXTRA)){
             Toast.makeText(this, R.string.test_notif_action_click,Toast.LENGTH_LONG).show();
+            int idToDismiss = intent.getIntExtra(EXTRA_NOTIF_TO_DISMISS, 0);
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+            notificationManager.cancel(idToDismiss);
         }
     }
 
@@ -175,10 +181,10 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(TEST_NOTIF_CONTENT_EXTRA, TEST_NOTIF_CONTENT_EXTRA);
         PendingIntent pi = PendingIntent.getActivity(this, TEST_NOTIF_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         Intent actionIntent = new Intent(this,MainActivity.class);
-        actionIntent.putExtra(NotifHandlerBroadcastReceiver.EXTRA_NOTIF_TO_DISMISS, TEST_NOTIF_ID);
+        actionIntent.putExtra(EXTRA_NOTIF_TO_DISMISS, TEST_NOTIF_ID);
 
         actionIntent.putExtra(TEST_NOTIF_ACTION_EXTRA, TEST_NOTIF_ACTION_EXTRA);
-        PendingIntent actionPI  = PendingIntent.getActivity(this, TEST_NOTIF_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent actionPI  = PendingIntent.getActivity(this, TEST_NOTIF_CODE, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Action action = new NotificationCompat.Action.Builder (0, getResources().getString(R.string.senate), actionPI).build();
         List<NotificationCompat.Action> actions = new ArrayList<>();
         if (actionsEnabledCheckbox.isChecked()) {
